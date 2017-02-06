@@ -15,16 +15,24 @@ class MovieViewerController: UIViewController, UITableViewDataSource, UITableVie
     @IBOutlet weak var tableView: UITableView!
     
     var movies : [NSDictionary] = []
+    var url = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")
+    var refreshControl : UIRefreshControl!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // Initialize a UIRefreshControl
+        let refreshControl = UIRefreshControl()
+        refreshControl.tintColor = UIColor.blue
+        refreshControl.addTarget(self, action: #selector(refreshControlAction), for: UIControlEvents.valueChanged)
+        tableView.insertSubview(refreshControl, at: 0)
+        
         tableView.delegate = self
         tableView.dataSource = self
         
         // Do any additional setup after loading the view.
-        let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
-        let url = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=\(apiKey)")!
-        let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
+//        let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
+        
+        let request = URLRequest(url: self.url!, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
         let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
         
         // Display HUD right before the request is made
@@ -50,9 +58,13 @@ class MovieViewerController: UIViewController, UITableViewDataSource, UITableVie
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
+
+    //return cell number func
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return movies.count
+            return movies.count
     }
+    
+    //update cell detail func
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as! MovieCell
 //        let cell = UITableViewCell()
@@ -76,6 +88,29 @@ class MovieViewerController: UIViewController, UITableViewDataSource, UITableVie
         } else { cell.imageCell = nil }
         
         return cell
+    }
+    
+    //Refresh func
+    func refreshControlAction(_ refreshControl: UIRefreshControl) {
+        
+        // Configure session so that completion handler is executed on main UI thread
+        let request = URLRequest(url: self.url!, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
+        let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
+        let task: URLSessionDataTask = session.dataTask(with: request) { (data: Data?, response: URLResponse?, error: Error?) in
+            if let data = data {
+                if let dataDictionary = try! JSONSerialization.jsonObject(with: data, options: []) as? NSDictionary {
+//                                        print(dataDictionary)
+                    self.movies = dataDictionary["results"] as! [NSDictionary]
+                    
+                    // Hide HUD once the network request comes back (must be done on main UI thread)
+                    MBProgressHUD.hide(for: self.view, animated: true)
+                    //Relod
+                    self.tableView.reloadData()
+                    refreshControl.endRefreshing()
+                }
+            }
+        }
+        task.resume()
     }
 
     /*
