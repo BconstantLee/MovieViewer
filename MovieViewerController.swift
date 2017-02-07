@@ -10,30 +10,35 @@ import AFNetworking
 import MBProgressHUD
 import SystemConfiguration
 
-class MovieViewerController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
+class MovieViewerController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UISearchBarDelegate {
 
     @IBOutlet weak var collectView: UICollectionView!
     @IBOutlet weak var errorView: UITextView!
     @IBOutlet weak var flow: UICollectionViewFlowLayout!
+    @IBOutlet weak var searchBar: UISearchBar!
     
     var movies : [NSDictionary] = []
     var url = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")
     var refreshControl : UIRefreshControl!
+    var filteredData : [NSDictionary] = []
+    var searchCancel = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Initialize a UIRefreshControl
         let refreshControl = UIRefreshControl()
-        refreshControl.tintColor = UIColor.blue
+        refreshControl.tintColor = UIColor.red
         refreshControl.addTarget(self, action: #selector(refreshControlAction), for: UIControlEvents.valueChanged)
         collectView.insertSubview(refreshControl, at: 0)
         //modify layout
         flow.minimumLineSpacing = 0
         flow.minimumInteritemSpacing = 0
         flow.sectionInset = UIEdgeInsetsMake(0, 0, 0, 0)
+        collectView.backgroundColor = UIColor.black
         
         collectView.dataSource = self
         collectView.delegate = self
+        searchBar.delegate = self
 
         //check connection
         let check = isInternetAvailable()
@@ -52,7 +57,7 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
                     if let dataDictionary = try! JSONSerialization.jsonObject(with: data, options: []) as? NSDictionary {
 //                    print(dataDictionary)
                         self.movies = dataDictionary["results"] as! [NSDictionary]
-                    
+                        self.filteredData = self.movies
                         // Hide HUD once the network request comes back (must be done on main UI thread)
                         MBProgressHUD.hide(for: self.view, animated: true)
                         //Relod
@@ -72,17 +77,44 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        // When there is no text, filteredData is the same as the original data
+        // When user has entered text into the search box
+        // Use the filter method to iterate over all items in the data array
+        // For each item, return true if the item should be included and false if the
+        // item should NOT be included
+        filteredData = searchText.isEmpty ? movies : movies.filter({(movie: NSDictionary) -> Bool in
+            // If dataItem matches the searchText, return true to include it
+            let title = movie["title"] as! String
+            return title.range(of: searchText, options: .caseInsensitive) != nil
+        })
+        
+        collectView.reloadData()
+    }
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        self.searchBar.showsCancelButton = true
+    }
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.showsCancelButton = false
+        searchBar.text = ""
+        searchBar.resignFirstResponder()
+        //reset the movies displayed
+        filteredData = movies
+        searchCancel = true
+        collectView.reloadData()
+    }
+
 
     //return cell number func
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection: Int) -> Int {
-            return movies.count
+            return filteredData.count
     }
     
     //update cell detail func
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MovieCell", for: indexPath) as! MovieCell2
 //        let cell = UITableViewCell()
-        let movie = movies[indexPath.row]
+        let movie = filteredData[indexPath.row]
         //set title
         if let title = movie["title"] as? String {
             cell.title.text = title
@@ -97,7 +129,8 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
                                         success: { (imageRequest, imageResponse, image) -> Void in
                                             
                                             // imageResponse will be nil if the image is cached
-                                            if imageResponse != nil {
+                                            if (imageResponse != nil || self.searchCancel) {
+                                                self.searchCancel = false
                                                 print("Image was NOT cached, fade in image")
                                                 cell.imageCell.alpha = 0.0
                                                 cell.imageCell.image = image
