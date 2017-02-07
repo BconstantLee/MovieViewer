@@ -19,7 +19,7 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="10" id="52B-2c-tQA">
-                                    <size key="itemSize" width="133" height="161"/>
+                                    <size key="itemSize" width="182" height="265"/>
                                     <size key="headerReferenceSize" width="0.0" height="0.0"/>
                                     <size key="footerReferenceSize" width="0.0" height="0.0"/>
                                     <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
@@ -33,18 +33,18 @@
                                 </textView>
                                 <cells>
                                     <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" misplaced="YES" reuseIdentifier="MovieCell" id="gPQ-t8-M4O" customClass="MovieCell2" customModule="MovieViewer" customModuleProvider="target">
-                                        <rect key="frame" x="0.0" y="0.0" width="133" height="161"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="182" height="265"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
-                                            <rect key="frame" x="0.0" y="0.0" width="133" height="161"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="182" height="265"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" id="tGc-mO-AjN">
-                                                    <frame key="frameInset" width="133" height="142"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                    <frame key="frameInset" minX="0.0%" minY="0.0%" width="182" height="235"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                                 </imageView>
                                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="title" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Ikr-AV-J0c">
-                                                    <frame key="frameInset" minX="8" minY="140" width="125" height="21"/>
+                                                    <frame key="frameInset" minY="232" width="182" height="33"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -52,6 +52,7 @@
                                                 </label>
                                             </subviews>
                                         </view>
+                                        <size key="customSize" width="182" height="265"/>
                                         <connections>
                                             <outlet property="imageCell" destination="tGc-mO-AjN" id="DyP-t6-UGS"/>
                                             <outlet property="title" destination="Ikr-AV-J0c" id="Wzn-EI-BaN"/>
@@ -65,6 +66,7 @@
                     <connections>
                         <outlet property="collectView" destination="3UV-e9-8PI" id="DNn-S1-VPI"/>
                         <outlet property="errorView" destination="JVT-73-qU3" id="6tZ-rD-LJU"/>
+                        <outlet property="flow" destination="52B-2c-tQA" id="z8z-ao-aBr"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>

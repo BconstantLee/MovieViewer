@@ -14,6 +14,7 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
 
     @IBOutlet weak var collectView: UICollectionView!
     @IBOutlet weak var errorView: UITextView!
+    @IBOutlet weak var flow: UICollectionViewFlowLayout!
     
     var movies : [NSDictionary] = []
     var url = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")
@@ -26,6 +27,10 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
         refreshControl.tintColor = UIColor.blue
         refreshControl.addTarget(self, action: #selector(refreshControlAction), for: UIControlEvents.valueChanged)
         collectView.insertSubview(refreshControl, at: 0)
+        //modify layout
+        flow.minimumLineSpacing = 0
+        flow.minimumInteritemSpacing = 0
+        flow.sectionInset = UIEdgeInsetsMake(0, 0, 0, 0)
         
         collectView.dataSource = self
         collectView.delegate = self
@@ -85,8 +90,28 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
         //set image
         if let poster_path = movie["poster_path"] as? String {
             let base_url = "https://image.tmdb.org/t/p/w500/"
-            let posterURL = URL(string: base_url + poster_path)!
-            cell.imageCell.setImageWith(posterURL)
+            let posterURL = String(base_url + poster_path)!
+            let imageRequest = NSURLRequest(url: NSURL(string: posterURL)! as URL)
+            cell.imageCell.setImageWith(imageRequest as URLRequest,
+                                        placeholderImage: nil,
+                                        success: { (imageRequest, imageResponse, image) -> Void in
+                                            
+                                            // imageResponse will be nil if the image is cached
+                                            if imageResponse != nil {
+                                                print("Image was NOT cached, fade in image")
+                                                cell.imageCell.alpha = 0.0
+                                                cell.imageCell.image = image
+                                                UIView.animate(withDuration: 1, animations: { () -> Void in
+                                                    cell.imageCell.alpha = 1.0
+                                                })
+                                            } else {
+                                                print("Image was cached so just update the image")
+                                                cell.imageCell.image = image
+                                            }
+                },
+                                        failure: { (imageRequest, imageResponse, error) -> Void in
+                                            // do something for the failure condition
+            })
         } else { cell.imageCell = nil }
         
         return cell
