@@ -10,5 +10,6 @@ import UIKit
 
 class MovieCell2: UICollectionViewCell {
     @IBOutlet weak var imageCell: UIImageView!
+    @IBOutlet weak var title: UILabel!
     
 }

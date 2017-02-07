@@ -4,16 +4,15 @@
 //
 //  Created by Bconsatnt on 2/5/17.
 //  Copyright © 2017 Bconsatnt. All rights reserved.
-///Users/apple/Desktop/MovieViewer/MovieViewer/MovieCell2.swift
 
 import UIKit
 import AFNetworking
 import MBProgressHUD
 import SystemConfiguration
 
-class MovieViewerController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class MovieViewerController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
 
-    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var collectView: UICollectionView!
     @IBOutlet weak var errorView: UITextView!
     
     var movies : [NSDictionary] = []
@@ -26,10 +25,10 @@ class MovieViewerController: UIViewController, UITableViewDataSource, UITableVie
         let refreshControl = UIRefreshControl()
         refreshControl.tintColor = UIColor.blue
         refreshControl.addTarget(self, action: #selector(refreshControlAction), for: UIControlEvents.valueChanged)
-        tableView.insertSubview(refreshControl, at: 0)
+        collectView.insertSubview(refreshControl, at: 0)
         
-        tableView.delegate = self
-        tableView.dataSource = self
+        collectView.dataSource = self
+        collectView.delegate = self
 
         //check connection
         let check = isInternetAvailable()
@@ -52,7 +51,7 @@ class MovieViewerController: UIViewController, UITableViewDataSource, UITableVie
                         // Hide HUD once the network request comes back (must be done on main UI thread)
                         MBProgressHUD.hide(for: self.view, animated: true)
                         //Relod
-                        self.tableView.reloadData()
+                        self.collectView.reloadData()
                     }
                 }
             }
@@ -70,26 +69,19 @@ class MovieViewerController: UIViewController, UITableViewDataSource, UITableVie
     }
 
     //return cell number func
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection: Int) -> Int {
             return movies.count
     }
     
     //update cell detail func
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as! MovieCell
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MovieCell", for: indexPath) as! MovieCell2
 //        let cell = UITableViewCell()
         let movie = movies[indexPath.row]
-            
         //set title
         if let title = movie["title"] as? String {
             cell.title.text = title
         } else { cell.title = nil }
-        
-        //set overview
-        if let overview = movie["overview"] as? String {
-            cell.overview.text = overview
-        } else { cell.overview = nil }
-            
         //set image
         if let poster_path = movie["poster_path"] as? String {
             let base_url = "https://image.tmdb.org/t/p/w500/"
@@ -99,7 +91,7 @@ class MovieViewerController: UIViewController, UITableViewDataSource, UITableVie
         
         return cell
     }
-    
+
     //Refresh func
     func refreshControlAction(_ refreshControl: UIRefreshControl) {
         
@@ -123,7 +115,7 @@ class MovieViewerController: UIViewController, UITableViewDataSource, UITableVie
                         // Hide HUD once the network request comes back (must be done on main UI thread)
                         MBProgressHUD.hide(for: self.view, animated: true)
                         //Relod
-                        self.tableView.reloadData()
+                        self.collectView.reloadData()
                         // Tell the refreshControl to stop spinning
                         refreshControl.endRefreshing()
                     }
