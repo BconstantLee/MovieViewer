@@ -4,15 +4,17 @@
 //
 //  Created by Bconsatnt on 2/5/17.
 //  Copyright © 2017 Bconsatnt. All rights reserved.
-//
+///Users/apple/Desktop/MovieViewer/MovieViewer/MovieCell2.swift
 
 import UIKit
 import AFNetworking
 import MBProgressHUD
+import SystemConfiguration
 
 class MovieViewerController: UIViewController, UITableViewDataSource, UITableViewDelegate {
 
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var errorView: UITextView!
     
     var movies : [NSDictionary] = []
     var url = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")
@@ -28,30 +30,38 @@ class MovieViewerController: UIViewController, UITableViewDataSource, UITableVie
         
         tableView.delegate = self
         tableView.dataSource = self
-        
+
+        //check connection
+        let check = isInternetAvailable()
+
         // Do any additional setup after loading the view.
 //        let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
+        if (check) {
+            let request = URLRequest(url: self.url!, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
+            let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
         
-        let request = URLRequest(url: self.url!, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
-        let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
+            // Display HUD right before the request is made
+            MBProgressHUD.showAdded(to: self.view, animated: true)
         
-        // Display HUD right before the request is made
-        MBProgressHUD.showAdded(to: self.view, animated: true)
-        
-        let task: URLSessionDataTask = session.dataTask(with: request) { (data: Data?, response: URLResponse?, error: Error?) in
-            if let data = data {
-                if let dataDictionary = try! JSONSerialization.jsonObject(with: data, options: []) as? NSDictionary {
+            let task: URLSessionDataTask = session.dataTask(with: request) { (data: Data?, response: URLResponse?, error: Error?) in
+                if let data = data {
+                    if let dataDictionary = try! JSONSerialization.jsonObject(with: data, options: []) as? NSDictionary {
 //                    print(dataDictionary)
-                    self.movies = dataDictionary["results"] as! [NSDictionary]
+                        self.movies = dataDictionary["results"] as! [NSDictionary]
                     
-                    // Hide HUD once the network request comes back (must be done on main UI thread)
-                    MBProgressHUD.hide(for: self.view, animated: true)
-                    //Relod
-                    self.tableView.reloadData()
+                        // Hide HUD once the network request comes back (must be done on main UI thread)
+                        MBProgressHUD.hide(for: self.view, animated: true)
+                        //Relod
+                        self.tableView.reloadData()
+                    }
                 }
             }
+            task.resume()
+        } else {
+            self.errorView.isHidden = false
+            MBProgressHUD.hide(for: self.view, animated: true)
         }
-        task.resume()
+        
     }
 
     override func didReceiveMemoryWarning() {
@@ -94,23 +104,59 @@ class MovieViewerController: UIViewController, UITableViewDataSource, UITableVie
     func refreshControlAction(_ refreshControl: UIRefreshControl) {
         
         // Configure session so that completion handler is executed on main UI thread
-        let request = URLRequest(url: self.url!, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
-        let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
-        let task: URLSessionDataTask = session.dataTask(with: request) { (data: Data?, response: URLResponse?, error: Error?) in
-            if let data = data {
-                if let dataDictionary = try! JSONSerialization.jsonObject(with: data, options: []) as? NSDictionary {
-//                                        print(dataDictionary)
-                    self.movies = dataDictionary["results"] as! [NSDictionary]
-                    
-                    // Hide HUD once the network request comes back (must be done on main UI thread)
-                    MBProgressHUD.hide(for: self.view, animated: true)
-                    //Relod
-                    self.tableView.reloadData()
-                    refreshControl.endRefreshing()
+        let check = isInternetAvailable()
+        if (check) {
+            //hide the error messge
+            self.errorView.isHidden = true
+            let request = URLRequest(url: self.url!, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
+            let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
+            
+            // Display HUD right before the request is made
+            MBProgressHUD.showAdded(to: self.view, animated: true)
+            
+            let task: URLSessionDataTask = session.dataTask(with: request) { (data: Data?, response: URLResponse?, error: Error?) in
+                if let data = data {
+                    if let dataDictionary = try! JSONSerialization.jsonObject(with: data, options: []) as? NSDictionary {
+                        //                    print(dataDictionary)
+                        self.movies = dataDictionary["results"] as! [NSDictionary]
+                        
+                        // Hide HUD once the network request comes back (must be done on main UI thread)
+                        MBProgressHUD.hide(for: self.view, animated: true)
+                        //Relod
+                        self.tableView.reloadData()
+                        // Tell the refreshControl to stop spinning
+                        refreshControl.endRefreshing()
+                    }
                 }
             }
+            task.resume()
+        } else {
+            //show the error messge
+            self.errorView.isHidden = false
+            MBProgressHUD.hide(for: self.view, animated: true)
+            // Tell the refreshControl to stop spinning
+            refreshControl.endRefreshing()
         }
-        task.resume()
+    }
+    func isInternetAvailable() -> Bool
+    {
+        var zeroAddress = sockaddr_in()
+        zeroAddress.sin_len = UInt8(MemoryLayout.size(ofValue: zeroAddress))
+        zeroAddress.sin_family = sa_family_t(AF_INET)
+        
+        let defaultRouteReachability = withUnsafePointer(to: &zeroAddress) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {zeroSockAddress in
+                SCNetworkReachabilityCreateWithAddress(nil, zeroSockAddress)
+            }
+        }
+        
+        var flags = SCNetworkReachabilityFlags()
+        if !SCNetworkReachabilityGetFlags(defaultRouteReachability!, &flags) {
+            return false
+        }
+        let isReachable = (flags.rawValue & UInt32(kSCNetworkFlagsReachable)) != 0
+        let needsConnection = (flags.rawValue & UInt32(kSCNetworkFlagsConnectionRequired)) != 0
+        return (isReachable && !needsConnection)
     }
 
     /*
