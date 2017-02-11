@@ -18,7 +18,7 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
     @IBOutlet weak var searchBar: UISearchBar!
     
     var movies : [NSDictionary] = []
-    var url = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")
+    var endpoint : String!
     var refreshControl : UIRefreshControl!
     var filteredData : [NSDictionary] = []
     var searchCancel = false
@@ -46,7 +46,9 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
         // Do any additional setup after loading the view.
 //        let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
         if (check) {
-            let request = URLRequest(url: self.url!, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
+            let url = URL(string: "https://api.themoviedb.org/3/movie/" + endpoint + "?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")
+            print(url)
+            let request = URLRequest(url: url!, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
             let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
         
             // Display HUD right before the request is made
@@ -115,10 +117,12 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MovieCell", for: indexPath) as! MovieCell2
 //        let cell = UITableViewCell()
         let movie = filteredData[indexPath.row]
+        
         //set title
         if let title = movie["title"] as? String {
             cell.title.text = title
         } else { cell.title = nil }
+        
         //set image
         if let poster_path = movie["poster_path"] as? String {
             let base_url = "https://image.tmdb.org/t/p/w500/"
@@ -130,15 +134,15 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
                                             
                                             // imageResponse will be nil if the image is cached
                                             if (imageResponse != nil || self.searchCancel) {
-                                                self.searchCancel = false
-                                                print("Image was NOT cached, fade in image")
+                                                
+//                                                print("Image was NOT cached, fade in image")
                                                 cell.imageCell.alpha = 0.0
                                                 cell.imageCell.image = image
-                                                UIView.animate(withDuration: 1, animations: { () -> Void in
+                                                UIView.animate(withDuration: 0.3, animations: { () -> Void in
                                                     cell.imageCell.alpha = 1.0
                                                 })
                                             } else {
-                                                print("Image was cached so just update the image")
+//                                                print("Image was cached so just update the image")
                                                 cell.imageCell.image = image
                                             }
                 },
@@ -158,7 +162,10 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
         if (check) {
             //hide the error messge
             self.errorView.isHidden = true
-            let request = URLRequest(url: self.url!, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
+            let type = self.endpoint as String
+            print(type)
+            let url = URL(string: "https://api.themoviedb.org/3/movie/\(type)?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")
+            let request = URLRequest(url: url!, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
             let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
             
             // Display HUD right before the request is made
@@ -175,6 +182,9 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
                         //Relod
                         self.collectView.reloadData()
                         // Tell the refreshControl to stop spinning
+                        if (self.searchCancel) {
+                            self.searchCancel = false
+                        }
                         refreshControl.endRefreshing()
                     }
                 }
@@ -209,14 +219,20 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
         return (isReachable && !needsConnection)
     }
 
-    /*
+    
     // MARK: - Navigation
 
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         // Get the new view controller using segue.destinationViewController.
         // Pass the selected object to the new view controller.
+        let cell = sender as! UICollectionViewCell
+        let indexPath = collectView.indexPath(for: cell)
+        let movie = movies[indexPath!.item]
+        
+        let detailViewController = segue.destination as! DetailViewController
+        detailViewController.movie = movie
     }
-    */
+    
 
 }
