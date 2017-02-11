@@ -118,6 +118,11 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
 //        let cell = UITableViewCell()
         let movie = filteredData[indexPath.row]
         
+        //set background color
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = UIColor.red
+        cell.selectedBackgroundView = backgroundView
+        
         //set title
         if let title = movie["title"] as? String {
             cell.title.text = title
@@ -227,11 +232,13 @@ class MovieViewerController: UIViewController, UICollectionViewDataSource, UICol
         // Get the new view controller using segue.destinationViewController.
         // Pass the selected object to the new view controller.
         let cell = sender as! UICollectionViewCell
-        let indexPath = collectView.indexPath(for: cell)
-        let movie = movies[indexPath!.item]
+        if let indexPath = collectView.indexPath(for: cell) {
+            collectView.deselectItem(at: indexPath, animated:true)
+            let movie = movies[indexPath.item]
         
-        let detailViewController = segue.destination as! DetailViewController
-        detailViewController.movie = movie
+            let detailViewController = segue.destination as! DetailViewController
+            detailViewController.movie = movie
+        }
     }
     
 
